@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  #root {
+    @apply h-full;
+  }
+
+  html,
+  body {
+    @apply h-full;
+
+    @apply select-none;
+
+    @apply bg-white;
+
+    @apply bg-transparent;
+
+    @apply font-mono antialiased text-white;
+
+    @apply overflow-hidden;
+  }
+}
+body {
+  -webkit-app-region: drag;
+  background: rgba(0, 0, 0, 0);
+}
