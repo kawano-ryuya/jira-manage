@@ -1,4 +1,4 @@
-# note-mark
+# jira-manage
 
 An Electron application with React and TypeScript
 
@@ -32,4 +32,5 @@ $ pnpm build:mac
 # For Linux
 $ pnpm build:linux
 ```
+
 # jira-manage
