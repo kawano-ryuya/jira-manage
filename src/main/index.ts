@@ -1,5 +1,6 @@
 /* eslint-disable prettier/prettier */
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
+import axios from 'axios'
 import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import { join } from 'path'
 import icon from '../../resources/icon.png?asset'
@@ -7,11 +8,11 @@ import icon from '../../resources/icon.png?asset'
 function createWindow(): void {
   // ブラウザウィンドウを作成
   const mainWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
+    width: 400,
+    height: 300,
     show: false,
     //背景色を透過
-    transparent: true,
+    // transparent: true,
     // frame: false,
     autoHideMenuBar: true, // メニューバーを非表示
     ...(process.platform === 'linux' ? { icon } : {}), // Linuxの場合はアイコンを設定
@@ -58,6 +59,25 @@ app.whenReady().then(() => { // Windowsのアプリケーションユーザー�
 
   // IPC test
   ipcMain.on('ping', () => console.log('pong')) // pingを受信したらpongを出力
+
+  ipcMain.handle('fetch-jira-tickets', async () => {
+    try {
+      const response = await axios.get('https://panasonic-connect.atlassian.net/rest/api/3/search', {
+        params: {
+          jql: 'assignee=currentuser()'
+        },
+        auth: {
+          username: 'kawano.ryuya@jp.panasonic.com',
+          password: 'ATATT3xFfGF068wN_yT4ADOnpyCEMd9pcqDMm_tmhfZnewDZxOoCjVzuz1Sy_lviacnCXoGUqOnCL5U5mLNVrvKIvgQu6Oev61f2fPP_Me98TW3PdKK1eoatY1ix6B_irNt_VzQf5h4UrkTAa4lj5axcaOCYSvgn1W4NgU92hQuLf8IP4j4Hm4c=CE928D15'
+        }
+      });
+      return response.data.issues;
+    } catch (error) {
+      console.error('Error fetching tickets:', error);
+      throw error;
+    }
+  });
+
 
   createWindow() // ウィンドウを作成
 
