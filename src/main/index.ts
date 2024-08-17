@@ -1,7 +1,7 @@
 /* eslint-disable prettier/prettier */
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import axios from 'axios'
-import { app, BrowserWindow, ipcMain, shell } from 'electron'
+import { BrowserWindow, app, ipcMain, shell } from 'electron'
 import { join } from 'path'
 import icon from '../../resources/icon.png?asset'
 
@@ -64,7 +64,7 @@ app.whenReady().then(() => { // Windowsのアプリケーションユーザー�
     try {
       const response = await axios.get('https://panasonic-connect.atlassian.net/rest/api/3/search', {
         params: {
-          jql: 'assignee=currentuser()'
+          jql: 'assignee=currentuser() AND project=KPASC'
         },
         auth: {
           username: 'kawano.ryuya@jp.panasonic.com',

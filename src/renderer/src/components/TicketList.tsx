@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 
 export const TicketList = () => {
-  const [tickets, setTickets] = useState<{ id: string; fields: { summary: string } }[]>([])
+  const [tickets, setTickets] = useState<
+    { id: string; key: string; fields: { summary: string } }[]
+  >([])
   const [selectedTicket, setSelectedTicket] = useState('')
 
   useEffect(() => {
@@ -29,9 +31,9 @@ export const TicketList = () => {
         onChange={handleSelectChange}
       >
         <option value="">Select a ticket</option>
-        {tickets.map((ticket: { id: string; fields: { summary: string } }) => (
+        {tickets.map((ticket: { id: string; key: string; fields: { summary: string } }) => (
           <option key={ticket.id} value={ticket.fields.summary}>
-            {ticket.fields.summary}
+            {`${ticket.key}: ${ticket.fields.summary}`}
           </option>
         ))}
       </select>

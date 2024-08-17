@@ -1,1 +1,3 @@
-export type FetchJiraTickets = () => Promise<{ id: string; fields: { summary: string } }[]>
+export type FetchJiraTickets = () => Promise<
+  { id: string; key: string; fields: { summary: string } }[]
+>
