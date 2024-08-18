@@ -1,9 +1,14 @@
 /* eslint-disable prettier/prettier */
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
+import { ConfigData } from '@shared/models'
 import axios from 'axios'
 import { BrowserWindow, app, ipcMain, shell } from 'electron'
+import ElectronStore from 'electron-store'
 import { join } from 'path'
 import icon from '../../resources/icon.png?asset'
+
+const store = new ElectronStore<ConfigData>();
+let config = store.store;
 
 function createWindow(): void {
   // ブラウザウィンドウを作成
@@ -60,15 +65,28 @@ app.whenReady().then(() => { // Windowsのアプリケーションユーザー�
   // IPC test
   ipcMain.on('ping', () => console.log('pong')) // pingを受信したらpongを出力
 
+  ipcMain.handle('save-data', (_, data: ConfigData) => {
+    store.set('domain', data.domain);
+    store.set('id', data.id);
+    store.set('token', data.token);
+    store.set('jql', data.jql);
+    config = data;
+  });
+
+  ipcMain.handle('read-data', () => {
+    return store.store;
+  });
+
   ipcMain.handle('fetch-jira-tickets', async () => {
     try {
-      const response = await axios.get('https://panasonic-connect.atlassian.net/rest/api/3/search', {
+      const response = await axios.get(`https://${config.domain}/rest/api/3/search`, {
         params: {
-          jql: 'assignee=currentuser() AND project=KPASC'
+          jql: config.jql,
+          maxResults: 1000,
         },
         auth: {
-          username: 'kawano.ryuya@jp.panasonic.com',
-          password: 'ATATT3xFfGF068wN_yT4ADOnpyCEMd9pcqDMm_tmhfZnewDZxOoCjVzuz1Sy_lviacnCXoGUqOnCL5U5mLNVrvKIvgQu6Oev61f2fPP_Me98TW3PdKK1eoatY1ix6B_irNt_VzQf5h4UrkTAa4lj5axcaOCYSvgn1W4NgU92hQuLf8IP4j4Hm4c=CE928D15'
+          username: config.id,
+          password: config.token
         }
       });
       return response.data.issues;

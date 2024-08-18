@@ -29,7 +29,7 @@ export const Content = forwardRef<HTMLDivElement, ComponentProps<'div'>>(
     return (
       <div
         ref={ref} //refを渡す
-        className={twMerge('flex-1 h-[100vh] overflow-auto', className)} //tailwindcssのクラスをマージ
+        className={twMerge('flex-1 h-screen overflow-auto', className)} //tailwindcssのクラスをマージ
         {...props} //propsを展開
       >
         {children}

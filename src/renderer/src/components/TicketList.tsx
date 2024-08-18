@@ -1,48 +1,111 @@
-import { useEffect, useState } from 'react';
+import { Config } from '@/components'
+import { ConfigData, TicketInfo } from '@shared/models'
+import { SetStateAction, useEffect, useState } from 'react'
 
 export const TicketList = () => {
-  const [tickets, setTickets] = useState<
-    { id: string; key: string; fields: { summary: string } }[]
-  >([])
+  const [tickets, setTickets] = useState<TicketInfo[]>([])
   const [selectedTicket, setSelectedTicket] = useState('')
+  const [isFetching, setIsFetching] = useState(false)
+  const [isOpen, setIsOpen] = useState(false)
+  const [config, setConfig] = useState<ConfigData>({
+    domain: '',
+    id: '',
+    token: '',
+    jql: 'assignee=currentuser()'
+  })
 
   useEffect(() => {
-    fetchTickets()
-  }, [])
+    if (!isOpen) {
+      fetchConfig()
+    }
+  }, [isOpen])
 
-  const fetchTickets = async () => {
+  const fetchConfig = async () => {
     try {
-      const fetchedTickets = await window.context.fetchJiraTickets()
-      setTickets(fetchedTickets)
+      const config = await window.context.readData()
+      console.log('config', config)
+      setConfig(config)
     } catch (error) {
-      console.error('Error fetching tickets:', error)
+      console.error('Error fetching config:', error)
     }
   }
 
-  const handleSelectChange = (event) => {
+  const fetchTickets = async () => {
+    try {
+      setTickets([])
+      setSelectedTicket('')
+      setIsFetching(true)
+      const fetchedTickets = await window.context.fetchJiraTickets()
+      fetchedTickets.sort((a, b) => a.key.localeCompare(b.key))
+      setTickets(fetchedTickets)
+    } catch (error) {
+      console.error('Error fetching tickets:', error)
+    } finally {
+      setIsFetching(false)
+    }
+  }
+
+  const handleSelectChange = (event: { target: { value: SetStateAction<string> } }) => {
     setSelectedTicket(event.target.value)
   }
 
   return (
-    <div className="p-4 bg-blue-400">
-      <select
-        className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        value={selectedTicket}
-        onChange={handleSelectChange}
-      >
-        <option value="">Select a ticket</option>
-        {tickets.map((ticket: { id: string; key: string; fields: { summary: string } }) => (
-          <option key={ticket.id} value={ticket.fields.summary}>
-            {`${ticket.key}: ${ticket.fields.summary}`}
-          </option>
-        ))}
-      </select>
-      {selectedTicket && (
-        <div className="mt-4 p-2 bg-gray-100 rounded-md">
-          <h3 className="font-bold">Selected Ticket:</h3>
-          <p>{selectedTicket}</p>
+    <>
+      <Config
+        config={config}
+        setConfig={setConfig}
+        open={isOpen}
+        onCancel={() => setIsOpen(false)}
+        onOk={() => setIsOpen(false)}
+      />
+      <div className="p-2 bg-blue-400 h-1/2">
+        <div className="flex gap-2">
+          <select
+            className="w-[264px] p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 truncate"
+            value={selectedTicket}
+            onChange={handleSelectChange}
+          >
+            <option value="">
+              {isFetching
+                ? 'データ取得中...'
+                : tickets.length !== 0
+                  ? 'Select a ticket'
+                  : config.domain === '' || config.id === '' || config.token === ''
+                    ? '設定を行ってください'
+                    : '取得ボタンでチケットを取得'}
+            </option>
+            {tickets.map((ticket: TicketInfo) => (
+              <option key={ticket.id} value={`${ticket.key}: ${ticket.fields.summary}`}>
+                {`${ticket.key}: ${ticket.fields.summary}`}
+              </option>
+            ))}
+          </select>
+          <div className="flex gap-2">
+            <button
+              onClick={fetchTickets}
+              disabled={
+                isFetching || config.domain === '' || config.id === '' || config.token === ''
+              }
+              className={`${isFetching || config.domain === '' || config.id === '' || config.token === ''
+                  ? 'bg-gray-300'
+                  : 'bg-red-500 hover:bg-red-400'
+                } text-white text-sm px-2 py-2 rounded`}
+            >
+              取得
+            </button>
+            <button
+              onClick={() => setIsOpen(true)}
+              className="bg-green-500 hover:bg-green-400 text-white text-sm px-2 py-2 rounded"
+            >
+              設定
+            </button>
+          </div>
         </div>
-      )}
-    </div>
+        <div className="mt-2 p-2 bg-gray-100 rounded-md h-15">
+          <h3 className="font-bold">Selected Ticket:</h3>
+          <p className="truncate">{selectedTicket}</p>
+        </div>
+      </div>
+    </>
   )
 }

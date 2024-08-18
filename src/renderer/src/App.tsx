@@ -1,4 +1,4 @@
-import { Content, RootLayout, TicketList } from '@/components'
+import { Content, RootLayout, TicketList, Timer } from '@/components'
 
 function App(): JSX.Element {
   return (
@@ -6,6 +6,7 @@ function App(): JSX.Element {
       <RootLayout>
         <Content>
           <TicketList />
+          <Timer />
         </Content>
       </RootLayout>
     </>
