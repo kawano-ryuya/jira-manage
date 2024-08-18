@@ -12,6 +12,9 @@ let config = store.store;
 let tray;
 let isQuiting = false; // ウィンドウの終了フラグをアプリスコープ
 
+// シングルインスタンスロックをリクエスト
+const gotTheLock = app.requestSingleInstanceLock();
+
 function createWindow(): void {
   // ブラウザウィンドウを作成
   const mainWindow = new BrowserWindow({
@@ -90,104 +93,120 @@ function createWindow(): void {
   });
 }
 
-app.on('before-quit', () => {
-  isQuiting = true; // アプリケーション終了フラグを設定
-});
-// このメソッドはElectronが初期化を終え、ブラウザウィンドウを作成する準備ができたときに呼び出されます。
-// ブラウザウィンドウを作成する準備ができたときに呼び出されます。
-// このイベントが発生した後にのみ、一部のAPIを使用できます。
-app.whenReady().then(() => { // WindowsのアプリケーションユーザーモデルIDを設定
-  electronApp.setAppUserModelId('com.electron') // アプリケーションのユーザーモデルIDを設定
 
-  // 開発時にF12でDevToolsを開いたり閉じたりする
-  // 本番環境ではCommandOrControl + Rを無視する
-  // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
-  app.on('browser-window-created', (_, window) => { // ブラウザウィンドウが作成されたときに発生
-    optimizer.watchWindowShortcuts(window) // ウィンドウのショートカットを監視
-  })
-
-  // IPC test
-  ipcMain.on('ping', () => console.log('pong')) // pingを受信したらpongを出力
-
-  ipcMain.handle('save-data', (_, data: ConfigData) => {
-    store.set('domain', data.domain);
-    store.set('id', data.id);
-    store.set('token', data.token);
-    store.set('jql', data.jql);
-    config = data;
-  });
-
-  ipcMain.handle('read-data', () => {
-    return store.store;
-  });
-
-  ipcMain.handle('fetch-jira-tickets', async () => {
-    try {
-      const response = await axios.get(`https://${config.domain}/rest/api/3/search`, {
-        params: {
-          jql: config.jql,
-          maxResults: 1000,
-        },
-        auth: {
-          username: config.id,
-          password: config.token
-        }
-      });
-      return response.data.issues;
-    } catch (error) {
-      console.error('Error fetching tickets:', error);
-      throw error;
+if (!gotTheLock) {
+  // 別のインスタンスがすでに起動している場合はアプリを終了する
+  app.quit();
+} else {
+  app.on('second-instance', (_event, _commandLine, _workingDirectory) => {
+    // すでに別のインスタンスが起動している場合に実行されます
+    // 既存のウインドウを前面に表示する
+    const mainWindow = BrowserWindow.getAllWindows()[0];
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
     }
   });
 
-  ipcMain.handle('fetch-jira-ticket', async (_, key: string) => {
-    try {
-      const response = await axios.get(`https://${config.domain}/rest/api/3/issue/${key}`, {
-        auth: {
-          username: config.id,
-          password: config.token
-        }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching ticket:', error);
-      throw error;
+  app.on('before-quit', () => {
+    isQuiting = true; // アプリケーション終了フラグを設定
+  });
+  // このメソッドはElectronが初期化を終え、ブラウザウィンドウを作成する準備ができたときに呼び出されます。
+  // ブラウザウィンドウを作成する準備ができたときに呼び出されます。
+  // このイベントが発生した後にのみ、一部のAPIを使用できます。
+  app.whenReady().then(() => { // WindowsのアプリケーションユーザーモデルIDを設定
+    electronApp.setAppUserModelId('com.electron') // アプリケーションのユーザーモデルIDを設定
+
+    // 開発時にF12でDevToolsを開いたり閉じたりする
+    // 本番環境ではCommandOrControl + Rを無視する
+    // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
+    app.on('browser-window-created', (_, window) => { // ブラウザウィンドウが作成されたときに発生
+      optimizer.watchWindowShortcuts(window) // ウィンドウのショートカットを監視
+    })
+
+    // IPC test
+    ipcMain.on('ping', () => console.log('pong')) // pingを受信したらpongを出力
+
+    ipcMain.handle('save-data', (_, data: ConfigData) => {
+      store.set('domain', data.domain);
+      store.set('id', data.id);
+      store.set('token', data.token);
+      store.set('jql', data.jql);
+      config = data;
+    });
+
+    ipcMain.handle('read-data', () => {
+      return store.store;
+    });
+
+    ipcMain.handle('fetch-jira-tickets', async () => {
+      try {
+        const response = await axios.get(`https://${config.domain}/rest/api/3/search`, {
+          params: {
+            jql: config.jql,
+            maxResults: 1000,
+          },
+          auth: {
+            username: config.id,
+            password: config.token
+          }
+        });
+        return response.data.issues;
+      } catch (error) {
+        console.error('Error fetching tickets:', error);
+        throw error;
+      }
+    });
+
+    ipcMain.handle('fetch-jira-ticket', async (_, key: string) => {
+      try {
+        const response = await axios.get(`https://${config.domain}/rest/api/3/issue/${key}`, {
+          auth: {
+            username: config.id,
+            password: config.token
+          }
+        });
+        return response.data;
+      } catch (error) {
+        console.error('Error fetching ticket:', error);
+        throw error;
+      }
+    })
+
+    ipcMain.handle('update-timespent', async (_, key: string, time: number) => {
+      try {
+        await axios.post(`https://${config.domain}/rest/api/3/issue/${key}/worklog`, {
+          timeSpentSeconds: time
+        }, {
+          auth: {
+            username: config.id,
+            password: config.token
+          }
+        });
+      } catch (error) {
+        console.error('Error updating timespent:', error);
+        throw error;
+      }
+    })
+
+
+    createWindow() // ウィンドウを作成
+
+    app.on('activate', function () {
+      // macOSでは、アプリケーション内にウィンドウがないときにdockアイコンがクリックされると、ウィンドウを再作成するのが一般的です。
+      if (BrowserWindow.getAllWindows().length === 0) createWindow() // ウィンドウがない場合はウィンドウを作成
+    })
+  })
+
+  // すべてのウィンドウが閉じられたときに終了しますが、macOSでは一般的に、
+  // ユーザーがCmd + Qを押すまでアクティブなままにするため、アプリケーションとメニューバーがアクティブなままになります。
+  app.on('window-all-closed', () => { // すべてのウィンドウが閉じられたときに発生
+    // eslint-disable-next-line prettier/prettier
+    if (process.platform !== 'darwin') { // macOS以外の場合
+      app.quit() // アプリケーションを終了
     }
   })
 
-  ipcMain.handle('update-timespent', async (_, key: string, time: number) => {
-    try {
-      await axios.post(`https://${config.domain}/rest/api/3/issue/${key}/worklog`, {
-        timeSpentSeconds: time
-      }, {
-        auth: {
-          username: config.id,
-          password: config.token
-        }
-      });
-    } catch (error) {
-      console.error('Error updating timespent:', error);
-      throw error;
-    }
-  })
-
-
-  createWindow() // ウィンドウを作成
-
-  app.on('activate', function () {
-    // macOSでは、アプリケーション内にウィンドウがないときにdockアイコンがクリックされると、ウィンドウを再作成するのが一般的です。
-    if (BrowserWindow.getAllWindows().length === 0) createWindow() // ウィンドウがない場合はウィンドウを作成
-  })
-})
-
-// すべてのウィンドウが閉じられたときに終了しますが、macOSでは一般的に、
-// ユーザーがCmd + Qを押すまでアクティブなままにするため、アプリケーションとメニューバーがアクティブなままになります。
-app.on('window-all-closed', () => { // すべてのウィンドウが閉じられたときに発生
-  // eslint-disable-next-line prettier/prettier
-  if (process.platform !== 'darwin') { // macOS以外の場合
-    app.quit() // アプリケーションを終了
-  }
-})
-
-// このファイルには、アプリケーションの残りのメインプロセス固有のコードを含めることができます。
-// それらを別々のファイルに配置し、ここでrequireすることもできます。
+  // このファイルには、アプリケーションの残りのメインプロセス固有のコードを含めることができます。
+  // それらを別々のファイルに配置し、ここでrequireすることもできます。
+}
