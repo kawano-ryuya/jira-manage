@@ -1,4 +1,4 @@
-import { Content, RootLayout, TicketList, Timer } from '@/components'
+import { ActiveOnlyComponent, Content, RootLayout, TicketList, Timer } from '@/components'
 import { TicketInfo } from '@shared/models'
 import { useState } from 'react'
 
@@ -10,7 +10,9 @@ function App(): JSX.Element {
     <>
       <RootLayout>
         <Content>
-          <TicketList setTotalTime={setTotalTime} setTicket={setTicket} />
+          <ActiveOnlyComponent>
+            <TicketList setTotalTime={setTotalTime} setTicket={setTicket} />
+          </ActiveOnlyComponent>
           <Timer totalTime={totalTime} setTotalTime={setTotalTime} ticket={ticket} />
         </Content>
       </RootLayout>

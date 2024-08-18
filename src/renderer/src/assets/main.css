@@ -20,9 +20,17 @@
     @apply font-mono antialiased text-black;
 
     @apply overflow-hidden;
+
+    /* @apply opacity-50; */
   }
 }
 body {
   -webkit-app-region: drag;
   background: rgba(0, 0, 0, 0);
+}
+
+button,
+input,
+select {
+  -webkit-app-region: no-drag;
 }

@@ -25,7 +25,9 @@ export const Config = (props: ModalProps) => {
       <div className="bg-white  top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-60 p-5 flex flex-col items-start absolute z-20">
         <h1 className="text-xl font-bold">Config</h1>
         <div className="flex gap-2 mt-2">
-          <label className="text-lg inline-block w-[60px]">domain</label>
+          <label className="text-lg inline-block w-[65px]">
+            domain<span className="text-red-500">*</span>
+          </label>
           <input
             type="text"
             placeholder="ドメインを入力"
@@ -35,7 +37,9 @@ export const Config = (props: ModalProps) => {
           />
         </div>
         <div className="flex gap-2 mt-2">
-          <label className="text-lg inline-block w-[60px]">ID</label>
+          <label className="text-lg inline-block w-[65px]">
+            ID<span className="text-red-500">*</span>
+          </label>
           <input
             type="text"
             placeholder="メールアドレスを入力"
@@ -45,7 +49,9 @@ export const Config = (props: ModalProps) => {
           />
         </div>
         <div className="flex gap-2 mt-2">
-          <label className="text-lg inline-block w-[60px]">token</label>
+          <label className="text-lg inline-block w-[65px]">
+            token<span className="text-red-500">*</span>
+          </label>
           <input
             type="password"
             placeholder="JIRA API tokenを入力"
@@ -55,7 +61,7 @@ export const Config = (props: ModalProps) => {
           />
         </div>
         <div className="flex gap-2 mt-2">
-          <label className="text-lg inline-block w-[60px]">JQL</label>
+          <label className="text-lg inline-block w-[65px]">JQL</label>
           <input
             type="text"
             placeholder="JQLを入力"

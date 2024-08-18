@@ -2,25 +2,31 @@
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import { ConfigData } from '@shared/models'
 import axios from 'axios'
-import { BrowserWindow, app, ipcMain, shell } from 'electron'
+import { app, BrowserWindow, ipcMain, Menu, shell, Tray } from 'electron'
 import ElectronStore from 'electron-store'
 import { join } from 'path'
 import icon from '../../resources/icon.png?asset'
 
 const store = new ElectronStore<ConfigData>();
 let config = store.store;
+let tray;
+let isQuiting = false; // ウィンドウの終了フラグをアプリスコープ
 
 function createWindow(): void {
   // ブラウザウィンドウを作成
   const mainWindow = new BrowserWindow({
     width: 400,
     height: 300,
+    minWidth: 400,
+    minHeight: 300,
+    maxWidth: 400,
+    maxHeight: 300,
     alwaysOnTop: true,
     show: false,
     title: 'jira工数入力',
     //背景色を透過
-    // transparent: true,
-    // frame: false,
+    transparent: true,
+    frame: false,
     autoHideMenuBar: true, // メニューバーを非表示
     ...(process.platform === 'linux' ? { icon } : {}), // Linuxの場合はアイコンを設定
     // メインプロセスのコードで使用するエイリアスを設定
@@ -49,8 +55,44 @@ function createWindow(): void {
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html')) // レンダラープロセスのファイルを設定
   }
+  mainWindow.on('blur', () => {
+    mainWindow.setOpacity(0.7);
+  });
+
+  mainWindow.on('focus', () => {
+    mainWindow.setOpacity(1);
+  });
+
+  tray = new Tray(join(__dirname, '../../resources/icon.png'));
+
+  const contextMenu = Menu.buildFromTemplate([
+    { label: 'Show App', click: () => mainWindow.show() },
+    {
+      label: 'Quit', click: () => {
+        isQuiting = true; // 終了フラグを立てる
+        app.quit();
+      }
+    }
+  ]);
+
+  tray.setToolTip('jira工数入力');
+  tray.setContextMenu(contextMenu);
+
+  tray.on('click', () => {
+    mainWindow.show();
+  });
+
+  mainWindow.on('close', (event) => {
+    if (!isQuiting) {
+      event.preventDefault();
+      mainWindow.hide();
+    }
+  });
 }
 
+app.on('before-quit', () => {
+  isQuiting = true; // アプリケーション終了フラグを設定
+});
 // このメソッドはElectronが初期化を終え、ブラウザウィンドウを作成する準備ができたときに呼び出されます。
 // ブラウザウィンドウを作成する準備ができたときに呼び出されます。
 // このイベントが発生した後にのみ、一部のAPIを使用できます。
