@@ -1,6 +1,13 @@
+import { TicketInfo } from '@shared/models'
 import { useRef, useState } from 'react'
 
-export const Timer = () => {
+type TimerProps = {
+  totalTime: number
+  setTotalTime: (time: number) => void
+  ticket: TicketInfo | null
+}
+
+export const Timer = ({ totalTime, setTotalTime, ticket }: TimerProps) => {
   const [time, setTime] = useState(0)
   const [isActive, setIsActive] = useState(false)
   const timerRef = useRef<NodeJS.Timeout | number>(0)
@@ -35,29 +42,42 @@ export const Timer = () => {
     setTime(0)
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    await updateTimespent()
     resetTimer()
-    // 任意処理: 送信ボタンが押された時に実行するロジック
-    console.log('Timer sent')
+  }
+
+  const updateTimespent = async () => {
+    console.log('updateTimespent')
+    await window.context.updateTimespent(ticket!.key, time)
+    const updatedTicket = await window.context.fetchJiraTicket(ticket!.key)
+    setTotalTime(updatedTicket.fields.timespent)
   }
 
   return (
     <div className="flex h-1/2">
       {/* タイマー表示エリア */}
-      <div className="flex-1 bg-gray-100 flex items-center justify-center text-2xl">
-        <input
-          type="text"
-          value={formatTime(time)}
-          onChange={(e) => {
-            const parts = e.target.value.split(':')
-            const hours = parseInt(parts[0]) || 0
-            const minutes = parseInt(parts[1]) || 0
-            const seconds = parseInt(parts[2]) || 0
-            const totalSeconds = hours * 3600 + minutes * 60 + seconds
-            setTime(totalSeconds)
-          }}
-          className="w-32 text-center p-2"
-        />
+      <div className="flex flex-col flex-1 gap-2 bg-gray-100  justify-center items-center text-2xl">
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-bold text-center w-[50px]">total</p>
+          <p className="w-28 text-center bg-white">{formatTime(totalTime)}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-bold text-center w-[50px]">current</p>
+          <input
+            type="text"
+            value={formatTime(time)}
+            onChange={(e) => {
+              const parts = e.target.value.split(':')
+              const hours = parseInt(parts[0]) || 0
+              const minutes = parseInt(parts[1]) || 0
+              const seconds = parseInt(parts[2]) || 0
+              const totalSeconds = hours * 3600 + minutes * 60 + seconds
+              setTime(totalSeconds)
+            }}
+            className="w-28 text-center"
+          />
+        </div>
       </div>
 
       {/* ボタンエリア */}
@@ -85,7 +105,8 @@ export const Timer = () => {
           </button>
           <button
             onClick={handleSubmit}
-            className="bg-purple-500 hover:bg-purple-400 text-white text-sm px-2 py-2 rounded"
+            disabled={time < 60}
+            className={`${time < 60 ? 'bg-gray-400' : 'bg-yellow-500 hover:bg-yellow-400'} text-white text-sm px-2 py-2 rounded`}
           >
             工数入力
           </button>

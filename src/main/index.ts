@@ -15,7 +15,9 @@ function createWindow(): void {
   const mainWindow = new BrowserWindow({
     width: 400,
     height: 300,
+    alwaysOnTop: true,
     show: false,
+    title: 'jira工数入力',
     //背景色を透過
     // transparent: true,
     // frame: false,
@@ -95,6 +97,37 @@ app.whenReady().then(() => { // Windowsのアプリケーションユーザー�
       throw error;
     }
   });
+
+  ipcMain.handle('fetch-jira-ticket', async (_, key: string) => {
+    try {
+      const response = await axios.get(`https://${config.domain}/rest/api/3/issue/${key}`, {
+        auth: {
+          username: config.id,
+          password: config.token
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching ticket:', error);
+      throw error;
+    }
+  })
+
+  ipcMain.handle('update-timespent', async (_, key: string, time: number) => {
+    try {
+      await axios.post(`https://${config.domain}/rest/api/3/issue/${key}/worklog`, {
+        timeSpentSeconds: time
+      }, {
+        auth: {
+          username: config.id,
+          password: config.token
+        }
+      });
+    } catch (error) {
+      console.error('Error updating timespent:', error);
+      throw error;
+    }
+  })
 
 
   createWindow() // ウィンドウを作成

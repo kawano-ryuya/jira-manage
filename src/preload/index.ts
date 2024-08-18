@@ -10,6 +10,9 @@ try {
   // メインプロセスのAPIをレンダラープロセスに公開
   contextBridge.exposeInMainWorld('context', {
     fetchJiraTickets: () => ipcRenderer.invoke('fetch-jira-tickets'),
+    fetchJiraTicket: (key: string) => ipcRenderer.invoke('fetch-jira-ticket', key),
+    updateTimespent: (key: string, time: number) =>
+      ipcRenderer.invoke('update-timespent', key, time),
     saveData: (data: ConfigData) => ipcRenderer.invoke('save-data', data),
     readData: () => ipcRenderer.invoke('read-data')
   })

@@ -3,6 +3,7 @@ export type TicketInfo = {
   key: string
   fields: {
     summary: string
+    timespent: number
   }
 }
 

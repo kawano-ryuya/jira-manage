@@ -2,7 +2,12 @@ import { Config } from '@/components'
 import { ConfigData, TicketInfo } from '@shared/models'
 import { SetStateAction, useEffect, useState } from 'react'
 
-export const TicketList = () => {
+type TicketListProps = {
+  setTotalTime: (time: number) => void
+  setTicket: (ticket: TicketInfo | null) => void
+}
+
+export const TicketList = ({ setTotalTime, setTicket }: TicketListProps) => {
   const [tickets, setTickets] = useState<TicketInfo[]>([])
   const [selectedTicket, setSelectedTicket] = useState('')
   const [isFetching, setIsFetching] = useState(false)
@@ -11,12 +16,15 @@ export const TicketList = () => {
     domain: '',
     id: '',
     token: '',
-    jql: 'assignee=currentuser()'
+    jql: ''
   })
 
   useEffect(() => {
     if (!isOpen) {
       fetchConfig()
+    }
+    if (config.jql === '') {
+      setConfig({ ...config, jql: 'assignee=currentuser()' })
     }
   }, [isOpen])
 
@@ -30,11 +38,26 @@ export const TicketList = () => {
     }
   }
 
+  useEffect(() => {
+    if (selectedTicket !== '') {
+      console.log('selectedTicket', selectedTicket)
+      const key = selectedTicket.split(':')[0].trim()
+      const ticket = tickets.find((ticket) => ticket.key === key)
+      if (ticket && ticket.fields.timespent) {
+        setTicket(ticket)
+        setTotalTime(ticket.fields.timespent)
+      } else {
+        setTotalTime(0)
+      }
+    }
+  }, [selectedTicket])
+
   const fetchTickets = async () => {
     try {
       setTickets([])
       setSelectedTicket('')
       setIsFetching(true)
+      setTotalTime(0)
       const fetchedTickets = await window.context.fetchJiraTickets()
       fetchedTickets.sort((a, b) => a.key.localeCompare(b.key))
       setTickets(fetchedTickets)

@@ -1,5 +1,5 @@
 appId: com.electron.app
-productName: note-mark
+productName: jira-manage
 directories:
   buildResources: build
 files:
