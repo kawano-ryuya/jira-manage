@@ -49,7 +49,10 @@ export const Timer = ({ totalTime, setTotalTime, ticket }: TimerProps) => {
 
   const updateTimespent = async () => {
     console.log('updateTimespent')
+    console.log('key', ticket!.key)
+    console.log('time', time)
     await window.context.updateTimespent(ticket!.key, time)
+    console.log('updated')
     const updatedTicket = await window.context.fetchJiraTicket(ticket!.key)
     setTotalTime(updatedTicket.fields.timespent)
   }

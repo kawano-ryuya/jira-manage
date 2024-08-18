@@ -31,7 +31,6 @@ export const TicketList = ({ setTotalTime, setTicket }: TicketListProps) => {
   const fetchConfig = async () => {
     try {
       const config = await window.context.readData()
-      console.log('config', config)
       setConfig(config)
     } catch (error) {
       console.error('Error fetching config:', error)
@@ -39,12 +38,12 @@ export const TicketList = ({ setTotalTime, setTicket }: TicketListProps) => {
   }
 
   useEffect(() => {
-    if (!selectedTicket) {
+    if (selectedTicket) {
       console.log('selectedTicket', selectedTicket)
       const key = selectedTicket.split(':')[0].trim()
       const ticket = tickets.find((ticket) => ticket.key === key)
+      if (ticket) setTicket(ticket)
       if (ticket && ticket.fields.timespent) {
-        setTicket(ticket)
         setTotalTime(ticket.fields.timespent)
       } else {
         setTotalTime(0)
