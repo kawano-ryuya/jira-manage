@@ -1,5 +1,5 @@
+import { useTimer } from '@/hooks/useTimer'
 import { TicketInfo } from '@shared/models'
-import { useRef, useState } from 'react'
 
 type TimerProps = {
   totalTime: number
@@ -8,53 +8,17 @@ type TimerProps = {
 }
 
 export const Timer = ({ totalTime, setTotalTime, ticket }: TimerProps) => {
-  const [time, setTime] = useState(0)
-  const [isActive, setIsActive] = useState(false)
-  const timerRef = useRef<NodeJS.Timeout | number>(0)
+  const { time, isActive, startTimer, stopTimer, resetTimer, handleSubmit, setTime } = useTimer(
+    ticket,
+    setTotalTime
+  )
 
-  const formatTime = (time) => {
+  const formatTime = (time: number) => {
     const getSeconds = `0${time % 60}`.slice(-2)
     const minutes = Math.floor(time / 60)
     const getMinutes = `0${minutes % 60}`.slice(-2)
     const getHours = `00${Math.floor(time / 3600)}`.slice(-3)
     return `${getHours}:${getMinutes}:${getSeconds}`
-  }
-
-  const startTimer = () => {
-    if (!isActive) {
-      setIsActive(true)
-      timerRef.current = setInterval(() => {
-        setTime((prevTime) => prevTime + 1)
-      }, 1000)
-    }
-  }
-
-  const stopTimer = () => {
-    if (isActive) {
-      clearInterval(timerRef.current)
-      setIsActive(false)
-    }
-  }
-
-  const resetTimer = () => {
-    clearInterval(timerRef.current)
-    setIsActive(false)
-    setTime(0)
-  }
-
-  const handleSubmit = async () => {
-    await updateTimespent()
-    resetTimer()
-  }
-
-  const updateTimespent = async () => {
-    console.log('updateTimespent')
-    console.log('key', ticket!.key)
-    console.log('time', time)
-    await window.context.updateTimespent(ticket!.key, time)
-    console.log('updated')
-    const updatedTicket = await window.context.fetchJiraTicket(ticket!.key)
-    setTotalTime(updatedTicket.fields.timespent)
   }
 
   return (
