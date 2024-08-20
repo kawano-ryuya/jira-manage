@@ -1,5 +1,7 @@
-import { Config } from '@/components'
-import { ConfigData, TicketInfo } from '@shared/models'
+import { Config } from '@/components/Config'
+import { useConfig } from '@/hooks/useConfig'
+import { useTickets } from '@/hooks/useTickets'
+import { TicketInfo } from '@shared/models'
 import { SetStateAction, useEffect, useState } from 'react'
 
 type TicketListProps = {
@@ -8,34 +10,10 @@ type TicketListProps = {
 }
 
 export const TicketList = ({ setTotalTime, setTicket }: TicketListProps) => {
-  const [tickets, setTickets] = useState<TicketInfo[]>([])
-  const [selectedTicket, setSelectedTicket] = useState('')
-  const [isFetching, setIsFetching] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
-  const [config, setConfig] = useState<ConfigData>({
-    domain: '',
-    id: '',
-    token: '',
-    jql: ''
-  })
-
-  useEffect(() => {
-    if (!isOpen) {
-      fetchConfig()
-    }
-    if (!config.jql) {
-      setConfig({ ...config, jql: 'assignee=currentuser()' })
-    }
-  }, [isOpen])
-
-  const fetchConfig = async () => {
-    try {
-      const config = await window.context.readData()
-      setConfig(config)
-    } catch (error) {
-      console.error('Error fetching config:', error)
-    }
-  }
+  const [config, setConfig] = useConfig()
+  const { tickets, selectedTicket, setSelectedTicket, isFetching, fetchTickets } =
+    useTickets(config)
 
   useEffect(() => {
     if (selectedTicket) {
@@ -50,22 +28,6 @@ export const TicketList = ({ setTotalTime, setTicket }: TicketListProps) => {
       }
     }
   }, [selectedTicket])
-
-  const fetchTickets = async () => {
-    try {
-      setTickets([])
-      setSelectedTicket('')
-      setIsFetching(true)
-      setTotalTime(0)
-      const fetchedTickets = await window.context.fetchJiraTickets()
-      fetchedTickets.sort((a, b) => a.key.localeCompare(b.key))
-      setTickets(fetchedTickets)
-    } catch (error) {
-      console.error('Error fetching tickets:', error)
-    } finally {
-      setIsFetching(false)
-    }
-  }
 
   const handleSelectChange = (event: { target: { value: SetStateAction<string> } }) => {
     setSelectedTicket(event.target.value)
