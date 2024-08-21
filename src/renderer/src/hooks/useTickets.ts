@@ -1,7 +1,7 @@
 import { ConfigData, TicketInfo } from '@shared/models'
 import { useState } from 'react'
 
-export const useTickets = (config: ConfigData) => {
+export const useTickets = (_config: ConfigData) => {
   const [tickets, setTickets] = useState<TicketInfo[]>([])
   const [selectedTicket, setSelectedTicket] = useState('')
   const [isFetching, setIsFetching] = useState(false)
