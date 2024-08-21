@@ -130,13 +130,13 @@ if (!gotTheLock) {
     })
 
     // SSL証明書の検証を無効にする
-    app.on('certificate-error', (event, webContents, url, error, certificate, callback) => {
+    app.on('certificate-error', (event, _webContents, _url, _error, _certificate, callback) => {
       event.preventDefault()
       callback(true)
     })
 
     // クライアント証明書の選択を無効にする
-    app.on('select-client-certificate', (event, webContents, url, list, callback) => {
+    app.on('select-client-certificate', (event, _webContents, _url, list, callback) => {
       event.preventDefault()
       callback(list[0])
     })
