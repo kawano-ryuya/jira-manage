@@ -7,6 +7,11 @@ import ElectronStore from 'electron-store'
 import { join } from 'path'
 import icon from '../../resources/icon.png?asset'
 
+// SSL証明書の検証を無効にする
+// これにより、自己署名証明書を使用しているサーバーからデータを取得できるようになります。
+// 参考: https://stackoverflow.com/questions/31673587/ignore-invalid-self-signed-ssl-certificate-in-node-js-with-https-request
+// process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
 const store = new ElectronStore<ConfigData>();
 let config = store.store;
 let tray;
@@ -122,6 +127,18 @@ if (!gotTheLock) {
     // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
     app.on('browser-window-created', (_, window) => { // ブラウザウィンドウが作成されたときに発生
       optimizer.watchWindowShortcuts(window) // ウィンドウのショートカットを監視
+    })
+
+    // SSL証明書の検証を無効にする
+    app.on('certificate-error', (event, webContents, url, error, certificate, callback) => {
+      event.preventDefault()
+      callback(true)
+    })
+
+    // クライアント証明書の選択を無効にする
+    app.on('select-client-certificate', (event, webContents, url, list, callback) => {
+      event.preventDefault()
+      callback(list[0])
     })
 
     // IPC test
