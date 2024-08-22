@@ -10,7 +10,7 @@ import icon from '../../resources/icon.png?asset'
 // SSL証明書の検証を無効にする
 // これにより、自己署名証明書を使用しているサーバーからデータを取得できるようになります。
 // 参考: https://stackoverflow.com/questions/31673587/ignore-invalid-self-signed-ssl-certificate-in-node-js-with-https-request
-// process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 const store = new ElectronStore<ConfigData>();
 let config = store.store;
