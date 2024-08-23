@@ -15,9 +15,9 @@ export const Config = (props: ModalProps) => {
     setConfig(props.config)
   }, [props.config])
   const handleSave = async () => {
-    console.log('save', config)
+    // console.log('save', config)
     await window.context.saveData(config)
-    console.log('saved')
+    // console.log('saved')
     props.onOk()
   }
   return props.open ? (
